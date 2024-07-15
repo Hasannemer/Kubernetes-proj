@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: primuslearning
+  labels:
+    app: primuslearning
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: primuslearning
+  template:
+    metadata:
+      labels:
+        app: primuslearning
+    spec:
+      containers:
+        - name: primuslearning
+          image: (paste the uri of the ecr )/primuslearning:1.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080

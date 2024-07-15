@@ -1,0 +1,26 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: knote-egress
+  namespace: default
+spec:
+  selector: app == 'knote'
+  egress:
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: app == 'mongo'
+      ports:
+        - 27017
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: app == 'minio'
+      ports:
+        - 9000
+  - action: Allow
+    protocol: TCP
+    destination:
+      nets:
+        - 0.0.0.0/0  # Allow access to any external IP (public users)
+  - action: Deny

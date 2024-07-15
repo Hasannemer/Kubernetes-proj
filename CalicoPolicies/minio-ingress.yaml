@@ -1,0 +1,16 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: minio-ingress
+  namespace: default
+spec:
+  selector: app == 'minio'
+  ingress:
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'knote'
+    destination:
+      ports:
+        - 9000
+  - action: Deny

@@ -1,0 +1,22 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: mongo-egress
+  namespace: default
+spec:
+  selector: app == 'mongo'
+  egress:
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: app == 'knote'
+      ports:
+        - 3000
+  - action: Allow
+    protocol: UDP
+    destination:
+      selector: k8s-app == 'kube-dns'
+      ports:
+        - 53
+  - action: Deny
+

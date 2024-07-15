@@ -1,0 +1,30 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: knote-ingress
+  namespace: default
+spec:
+  selector: app == 'knote'
+  ingress:
+  - action: Allow
+    protocol: TCP
+    source:
+      nets:
+        - 0.0.0.0/0  
+    destination:
+      ports:
+        - 80
+        - 443  
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'mongo'
+      ports:
+        - 27017
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'minio'
+      ports:
+        - 9000
+  - action: Deny
