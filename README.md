@@ -6,6 +6,13 @@
 > make sure to apply the first 8 terraform files without 10-nodegroup.tf file becuase 
 > we want empty eks cluster 
 
+#### troubleshoot
+```powershell
+kubectl get svc
+aws eks --region eu-central-1 update-kubeconfig --name my_eks_cluster --profile default 
+```
+    
+    
 **for setting up the calico CNI 
 follow these steps**
 
@@ -22,8 +29,7 @@ follow these steps**
     ```
 
 3. Configure the Calico installation:
-    ```powershell
-    kubectl create -f - <<EOF
+    ```powershell-interactive
     kind: Installation
     apiVersion: operator.tigera.io/v1
     metadata:
@@ -34,8 +40,11 @@ follow these steps**
         type: Calico
     calicoNetwork:
         bgp: Disabled
-    EOF
-    ```  
+    ```
+    ```powershell-interactive
+    kubectl apply -f 1-calico-installation.yaml
+    ```
+    
 
 4. Add node-group
     ```powershell
@@ -148,7 +157,6 @@ kubectl get ippools
 
     - Creating a service to expose Felix metrics
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: Service
     metadata:
@@ -161,8 +169,11 @@ kubectl get ippools
       ports:
       - port: 9091
         targetPort: 9091
-    EOF
     ```
+    ```powershell-interactive
+    kubectl apply -f 2-felix-metrics-service.yaml
+    ```
+    
     - Typha Configuration
     ```powershell
     kubectl patch installation default --type=merge -p '{"spec": {"typhaMetricsPort":9093}}'
@@ -171,7 +182,6 @@ kubectl get ippools
 
     - Creating a service to expose Typha metrics
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: Service
     metadata:
@@ -184,7 +194,9 @@ kubectl get ippools
       ports:
       - port: 9093
         targetPort: 9093
-    EOF
+    ```
+    ```powershell-interactive
+    kubectl apply -f 3-typha-metrics-service.yaml
     ```
     - kube-controllers configuration
     (verify):
@@ -196,7 +208,6 @@ kubectl get ippools
 2. Cluster preparation
     - namespace creation
     ```powershell
-    kubectl create -f -<<EOF
     apiVersion: v1
     kind: Namespace
     metadata:
@@ -204,11 +215,12 @@ kubectl get ippools
       labels:
         app:  ns-calico-monitoring
         role: monitoring
-    EOF
+    ```
+    ```powershell-interactive
+    kubectl apply -f 4-calico-namespace.yaml
     ```    
     - Service account creation
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -241,12 +253,13 @@ kubectl get ippools
     - kind: ServiceAccount
       name: calico-prometheus-user
       namespace: calico-monitoring
-    EOF
-    ```   
+    ```
+    ```powershell-interactive
+    kubectl apply -f 5-calico-service-account.yaml
+    ```       
 
 3. Install prometheus
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -306,11 +319,14 @@ kubectl get ippools
             regex: calico-kube-controllers-metrics
             replacement: $1
             action: keep
-    EOF
     ```
+    ```powershell-interactive
+    kubectl apply -f 6-prometheus-installation.yaml
+    ```
+    
+    
     - Create Prometheus pod
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: Pod
     metadata:
@@ -340,7 +356,9 @@ kubectl get ippools
       - name: config-volume
         configMap:
           name: prometheus-config
-    EOF
+    ```
+    ```powershell-interactive
+    kubectl apply -f 7-prometheus-pod.yaml
     ```
     - check installation
     ```powershell
@@ -365,7 +383,6 @@ kubectl get ippools
 1. Preparing Prometheus
 
     ```powershell
-    kubectl apply -f - <<EOF
         apiVersion: v1
         kind: Service
         metadata:
@@ -378,8 +395,11 @@ kubectl get ippools
           ports:
           - port: 9090
             targetPort: 9090
-        EOF
     ```
+    ```powershell-interactive
+    kubectl apply -f 8-prometheus-dashboard.yaml
+    ```
+
 
 2. Preparing Grafana pod
 
@@ -388,7 +408,6 @@ kubectl get ippools
     - 1. Provisioning datasource
     
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -410,7 +429,9 @@ kubectl get ippools
                 }
             ]
         }
-    EOF
+    ```
+    ```powershell-interactive
+    kubectl apply -f 9-grafana-config.yaml
     ```
  
     - 2. Provisioning Calico dashboards
@@ -419,7 +440,6 @@ kubectl get ippools
     ```
     - 3. Creating Grafana pod
     ```powershell
-    kubectl apply -f - <<EOF
     apiVersion: v1
     kind: Pod
     metadata:
@@ -456,8 +476,13 @@ kubectl get ippools
       - name: grafana-dashboards-volume
         configMap:
           name: grafana-dashboards-config
-    EOF
     ```
+
+    ```powershell-interactive
+    kubectl apply -f 10-grafana-pod.yaml
+    ```
+    
+
     - 4. Accessing Grafana Dashboard
     ```powershell
     kubectl port-forward pod/grafana-pod 8000:8000 -n calico-monitoring
