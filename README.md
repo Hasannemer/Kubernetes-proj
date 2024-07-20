@@ -73,54 +73,64 @@ follow these steps**
     kubectl calico version
     ```
     **output:**
+
     ![](<images/CALICO.png>)
     
 ## 3. Enable kubectl to manage Calico APIs
+### ➡**steps:**
+1. Create an instance of an operator.tigera.io/APIServer with the following contents.
+    ```yml
+    apiVersion: operator.tigera.io/v1
+    kind: APIServer
+    metadata:
+      name: default
+    spec: {}
+    ```
+    ```powershell-interactive
+    kubectl apply -f 11-api-server.yaml
+    ```
+    output : 
 
-1. Create the following manifest, which will install the API server as a deployment in the calico-apiserver namespace.
+    ![](<images/image.png>)
 
+2. Confirm it appears as Available with the following command.
     ```powershell
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/apiserver.yaml
+    kubectl get tigerastatus apiserver
     ```
 
-2. Generate a private key and CA bundle using the following openssl command. This certificate will be used by the main API server to authenticate with the Calico API server.
-    > ⚠ Do this step on a linux machine
-
-    ```bash
-    openssl req -x509 -nodes -newkey rsa:4096 -keyout apiserver.key -out apiserver.crt -days 365 -subj "/" -addext "subjectAltName = DNS:calico-api.calico-apiserver.svc"
-    ```
-    **output:**
-    ![](<images/CALICO-certificate.png>)
-
-3. Copy the ***apiserver.crt*** and ***apiserver.key*** files to the main machine.
-
-4. Provide the key and certificate to the Calico API server as a Kubernetes secret
-    ```powershell
-    cd C:\path\to\certifates\ 
-    ```
-    ```powershell
-    kubectl create secret -n calico-apiserver generic calico-apiserver-certs --from-file=apiserver.key --from-file=apiserver.crt
-    ```
-5. Configure the main API server with the CA bundle.
-    ```powershell
-    kubectl patch apiservice v3.projectcalico.org -p \
-        "{\"spec\": {\"caBundle\": \"$(kubectl get secret -n calico-apiserver calico-apiserver-certs -o go-template='{{ index .data "apiserver.crt" }}')\"}}"
-    ```
-6. Verify api installation
+    check whether the APIs are available with the following command:
     ```powershell
     kubectl api-resources | grep '\sprojectcalico.org'
     ```
-    output: 
-    
-kubectl get ippools
 
+    output:
+
+    ![](<images/output2.png>)
+
+3. Use kubectl for projectcalico.org APIs
+    ```powershell
+    kubectl get ippools    
+    ```
+    output:
+
+    ![](<images/output3.png>)
 ## 4. Configure calicoctl to connect to the Kubernetes API datastore
 
 >configure the calicoctl CLI tool for your Kubernetes cluster
 
 ### ➡**steps:**
 
-1. create configuration file 
+```powershell
+set DATASTORE_TYPE=kubernetes
+set KUBECONFIG=C:\Users\HP\.kube\config
+calicoctl get nodes
+```
+
+
+
+  ![alt text](image.png)
+
+<!-- 1. create configuration file 
     ```yaml
     apiVersion: projectcalico.org/v3
     kind: CalicoAPIConfig
@@ -137,7 +147,7 @@ kubectl get ippools
     ```powershell
     calicoctl --config C:\path\to\your\calicoctl.cfg get nodes
     #calicoctl --config C:\Users\HP\Documents\usal\spring 24\fyp\vpc\configuration\calicoctl.cfg get nodes
-    ```
+    ``` -->
 ## 5. Monitor Calico component metrics   
 
 >Use Prometheus configured for Calico components to get valuable metrics about the health of Calico.
@@ -151,7 +161,7 @@ kubectl get ippools
 
 1. Configure Calico to enable metrics reporting (enable felix metrics)
     ```powershell
-    kubectl patch felixconfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+    kubectl patch felixconfiguration default --type merge --patch '{\"spec\":{\"prometheusMetricsEnabled\": true}}'
     ```
     output: felixconfiguration.projectcalico.org/default patched
 
@@ -176,7 +186,7 @@ kubectl get ippools
     
     - Typha Configuration
     ```powershell
-    kubectl patch installation default --type=merge -p '{"spec": {"typhaMetricsPort":9093}}'
+    kubectl patch installation default --type=merge -p '{\"spec\": {\"typhaMetricsPort\":9093}}'
     ```
     output: installation.operator.tigera.io/default patched
 
@@ -365,6 +375,7 @@ kubectl get ippools
     kubectl get pods prometheus-pod -n calico-monitoring
     ```
     output:
+
     ![alt text](/images/image.png)
 
 4. View metrics
@@ -489,3 +500,15 @@ kubectl get ippools
     ```
     check:  access the Grafana web-ui at http://localhost:8000
     
+
+```powershell 
+kubectl apply -f "C:\Users\HP\Documents\usal\spring 24\fyp\Deploy-knote-to-eks-using-github-actions\kube"
+```
+
+```powershell
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.1/components.yaml
+```
+```powershell 
+kubectl get pods --watch
+```
+
