@@ -380,10 +380,10 @@ calicoctl get nodes
 
 4. View metrics
     ```powershell
-    kubectl port-forward pod/prometheus-pod 9090:9090 -n calico-monitoring
+    kubectl port-forward pod/prometheus-pod 9099:9099 -n calico-monitoring
     ```
     
-    Verify: Browse to http://localhost:9090 
+    Verify: Browse to http://localhost:9090
      
 ## 6. Visualizing metrics via Grafana
 
@@ -501,14 +501,88 @@ calicoctl get nodes
     check:  access the Grafana web-ui at http://localhost:8000
     
 
-```powershell 
-kubectl apply -f "C:\Users\HP\Documents\usal\spring 24\fyp\Deploy-knote-to-eks-using-github-actions\kube"
-```
+    ```powershell 
+    kubectl apply -f "C:\Users\HP\Documents\usal\spring 24\fyp\Deploy-knote-to-eks-using-github-actions\kube"
+    ```
 
+    ```powershell
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.1/components.yaml
+    ```
+    ```powershell 
+    kubectl get pods --watch
+    ```
+    
+## 7. Deploy application to cluster 
+### 1. push changes to github
+### 2. open the directory of the application and  do :
+    ```powershell
+    kubectl create namespace knote-ns
+    kubectl apply -f deployment.yaml
+    kubectl apply -f knote.yaml 
+    kubectl apply -f minio.yaml 
+    kubectl apply -f mongo.yaml
+    ```
+### 3. Expose the Application: 
+    ```powershell
+    kubectl expose deployment knote --type=LoadBalancer --name=knote-service --port=80 --target-port=3000 -n knote-ns
+    ```
+### 4.
+    ```powershell 
+    kubectl get svc -n knote-ns
+    ```
+
+## 8. Apply Calico  policies 
+
+### Do the following 
 ```powershell
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.1/components.yaml
+kubectl apply -f Default-deny.yaml
+kubectl apply -f knote-egress.yaml 
+kubectl apply -f knote-ingress.yaml
+kubectl apply -f minio-egress.yaml
+kubectl apply -f minio-ingress.yaml
+kubectl apply -f mongo-egress.yaml 
+kubectl apply -f mongo-ingress.yaml
 ```
-```powershell 
-kubectl get pods --watch
-```
+## 9. Test Calico Network Policies 
 
+<!-- 1. Configure namespaces
+
+```powershell 
+kubectl create ns policy-demo
+``` -->
+### Testing within the same namespace
+
+1. Create a test pod within the knote-ns namespace:
+
+    ```powershell-interactive
+    kubectl run test-pod --rm -ti --image busybox --namespace=knote-ns /bin/sh
+    ```
+2. From within the test pod, test access to the services:
+    ```powershell
+    wget -q --timeout=5 knote -O -
+    
+    wget -q --timeout=5 mongo:27017 -O -
+    
+    wget -q --timeout=5 minio:9000 -O -
+    ```
+
+### Testing from a separate namespace
+1. Testing from a separate namespace
+    ```powershell-interactive
+    kubectl create namespace test-ns
+    ```
+
+2. Create a test pod in the "test-ns" namespace:
+    ```powershell
+    kubectl run test-pod --rm -ti --image busybox --namespace=test-ns /bin/sh
+    ```
+
+3. From within the test pod, try to access the services in knote-ns:
+    ```powershell-interactive
+    wget -q --timeout=5 knote.knote-ns.svc.cluster.local -O -
+    
+    wget -q --timeout=5 mongo.knote-ns.svc.cluster.local:27017 -O -
+    
+    wget -q --timeout=5 minio.knote-ns.svc.cluster.local:9000 -O -
+    ```
+    

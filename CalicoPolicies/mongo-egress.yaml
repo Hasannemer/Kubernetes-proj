@@ -2,7 +2,7 @@ apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
   name: mongo-egress
-  namespace: default
+  namespace: Knote-ns
 spec:
   selector: app == 'mongo'
   egress:

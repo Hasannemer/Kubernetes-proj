@@ -2,7 +2,7 @@ apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
   name: knote-ingress
-  namespace: default
+  namespace: Knote-ns
 spec:
   selector: app == 'knote'
   ingress:
@@ -28,3 +28,9 @@ spec:
       ports:
         - 9000
   - action: Deny
+
+
+# Accept TCP traffic from any external IP on ports 80 and 443.
+# Accept TCP traffic from MongoDB pods (app: mongo) on port 27017.
+# Accept TCP traffic from MinIO pods (app: minio) on port 9000.
+# Deny any other ingress traffic.

@@ -2,7 +2,7 @@ apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
   name: knote-egress
-  namespace: default
+  namespace: Knote-ns
 spec:
   selector: app == 'knote'
   egress:
@@ -24,3 +24,9 @@ spec:
       nets:
         - 0.0.0.0/0  # Allow access to any external IP (public users)
   - action: Deny
+
+
+# Communicate with MongoDB pods (app: mongo) on port 27017.
+# Communicate with MinIO pods (app: minio) on port 9000.
+# Communicate with any external IP over TCP (public users).
+# Deny any other egress traffic.
